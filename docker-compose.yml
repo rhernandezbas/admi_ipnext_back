@@ -10,7 +10,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8288/api/v1/auth/me"]
+      test: ["CMD-SHELL", "wget -qO- --post-data='{}' --header='Content-Type:application/json' http://localhost:8288/api/v1/auth/login; exit 0"]
       interval: 10s
       timeout: 5s
       retries: 5
