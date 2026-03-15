@@ -51,14 +51,14 @@ func (h *AuthHandlerImpl) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("token", resp.Token, int((8 * time.Hour).Seconds()), "/", "", true, true)
+	c.SetCookie("token", resp.Token, int((8 * time.Hour).Seconds()), "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{
 		"data": gin.H{"usuario": toUsuarioResponse(resp.Usuario)},
 	})
 }
 
 func (h *AuthHandlerImpl) Logout(c *gin.Context) {
-	c.SetCookie("token", "", -1, "/", "", true, true)
+	c.SetCookie("token", "", -1, "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "Sesión cerrada"}})
 }
 
