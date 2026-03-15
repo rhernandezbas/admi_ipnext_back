@@ -1,6 +1,6 @@
 -- +goose Up
--- +goose StatementBegin
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS usuarios (
     id CHAR(36) PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS transferencias (
     id CHAR(36) PRIMARY KEY,
     beneficiario VARCHAR(255) NOT NULL,
@@ -31,12 +33,23 @@ CREATE TABLE IF NOT EXISTS transferencias (
     proveedor_id CHAR(36),
     creado_por CHAR(36) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_transferencias_estado (estado),
-    INDEX idx_transferencias_fecha_pago (fecha_pago),
-    INDEX idx_transferencias_categoria (categoria)
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
+CREATE INDEX IF NOT EXISTS idx_transferencias_estado ON transferencias (estado);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+CREATE INDEX IF NOT EXISTS idx_transferencias_fecha_pago ON transferencias (fecha_pago);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+CREATE INDEX IF NOT EXISTS idx_transferencias_categoria ON transferencias (categoria);
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS empleados (
     id CHAR(36) PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -51,7 +64,9 @@ CREATE TABLE IF NOT EXISTS empleados (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS liquidaciones (
     id CHAR(36) PRIMARY KEY,
     empleado_id CHAR(36) NOT NULL,
@@ -62,11 +77,11 @@ CREATE TABLE IF NOT EXISTS liquidaciones (
     estado VARCHAR(20) NOT NULL DEFAULT 'borrador',
     fecha_pago DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_liquidaciones_empleado (empleado_id),
-    INDEX idx_liquidaciones_periodo (periodo)
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS guardias (
     id CHAR(36) PRIMARY KEY,
     empleado_id CHAR(36) NOT NULL,
@@ -74,10 +89,11 @@ CREATE TABLE IF NOT EXISTS guardias (
     horas DECIMAL(5,2) NOT NULL,
     monto DECIMAL(15,2) NOT NULL,
     descripcion TEXT,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_guardias_empleado (empleado_id)
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS compensaciones (
     id CHAR(36) PRIMARY KEY,
     empleado_id CHAR(36) NOT NULL,
@@ -85,10 +101,11 @@ CREATE TABLE IF NOT EXISTS compensaciones (
     monto DECIMAL(15,2) NOT NULL,
     descripcion TEXT,
     fecha DATE NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_compensaciones_empleado (empleado_id)
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS proveedores (
     id CHAR(36) PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -101,7 +118,9 @@ CREATE TABLE IF NOT EXISTS proveedores (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS contratos_proveedor (
     id CHAR(36) PRIMARY KEY,
     proveedor_id CHAR(36) NOT NULL,
@@ -112,10 +131,11 @@ CREATE TABLE IF NOT EXISTS contratos_proveedor (
     vigencia_hasta DATE NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'activo',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_contratos_proveedor (proveedor_id)
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS servicios (
     id CHAR(36) PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -129,7 +149,9 @@ CREATE TABLE IF NOT EXISTS servicios (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS inmuebles (
     id CHAR(36) PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
@@ -143,7 +165,9 @@ CREATE TABLE IF NOT EXISTS inmuebles (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS contratos_alquiler (
     id CHAR(36) PRIMARY KEY,
     inmueble_id CHAR(36) NOT NULL,
@@ -153,11 +177,11 @@ CREATE TABLE IF NOT EXISTS contratos_alquiler (
     monto_mensual DECIMAL(15,2) NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'vigente',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_contratos_alquiler_inmueble (inmueble_id),
-    INDEX idx_contratos_alquiler_estado (estado)
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS pagos_alquiler (
     id CHAR(36) PRIMARY KEY,
     inmueble_id CHAR(36) NOT NULL,
@@ -166,11 +190,11 @@ CREATE TABLE IF NOT EXISTS pagos_alquiler (
     fecha_pago DATETIME,
     estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
     comprobante VARCHAR(500),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_pagos_alquiler_inmueble (inmueble_id),
-    INDEX idx_pagos_alquiler_periodo (periodo)
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS cuentas_bancarias (
     id CHAR(36) PRIMARY KEY,
     banco VARCHAR(255) NOT NULL,
@@ -185,7 +209,9 @@ CREATE TABLE IF NOT EXISTS cuentas_bancarias (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS movimientos_bancarios (
     id CHAR(36) PRIMARY KEY,
     cuenta_id CHAR(36) NOT NULL,
@@ -195,42 +221,66 @@ CREATE TABLE IF NOT EXISTS movimientos_bancarios (
     fecha DATETIME NOT NULL,
     conciliado BOOLEAN NOT NULL DEFAULT FALSE,
     referencia VARCHAR(255),
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_movimientos_cuenta (cuenta_id),
-    INDEX idx_movimientos_fecha (fecha),
-    INDEX idx_movimientos_conciliado (conciliado)
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+-- +goose StatementEnd
 
--- Insertar usuario admin inicial
+-- +goose StatementBegin
 INSERT IGNORE INTO usuarios (id, nombre, email, password, rol, permisos, activo, created_at, updated_at)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
     'Administrador',
     'admin@ipnext.com',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password: password
+    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
     'admin',
     '{"dashboard":true,"transferencias":"escritura","nominas":"escritura","proveedores":"escritura","servicios":"escritura","alquileres":"escritura","tesoreria":"escritura","reportes":"escritura"}',
     TRUE,
     NOW(),
     NOW()
 );
-
 -- +goose StatementEnd
 
 -- +goose Down
+
 -- +goose StatementBegin
 DROP TABLE IF EXISTS movimientos_bancarios;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS cuentas_bancarias;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS pagos_alquiler;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS contratos_alquiler;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS inmuebles;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS servicios;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS contratos_proveedor;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS proveedores;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS compensaciones;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS guardias;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS liquidaciones;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS empleados;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS transferencias;
+-- +goose StatementEnd
+-- +goose StatementBegin
 DROP TABLE IF EXISTS usuarios;
 -- +goose StatementEnd
