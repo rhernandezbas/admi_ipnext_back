@@ -12,7 +12,7 @@ import (
 type proveedorModel struct {
 	ID        string    `gorm:"primaryKey;type:char(36)"`
 	Nombre    string    `gorm:"not null"`
-	CUIT      string    `gorm:"uniqueIndex;not null"`
+	CUIT      string    `gorm:"column:cuit;not null"`
 	CBU       *string
 	Alias     *string
 	Email     *string
@@ -38,7 +38,7 @@ type contratoProveedorModel struct {
 	UpdatedAt     time.Time
 }
 
-func (contratoProveedorModel) TableName() string { return "contratos_proveedores" }
+func (contratoProveedorModel) TableName() string { return "contratos_proveedor" }
 
 // --- Proveedor Repository ---
 
