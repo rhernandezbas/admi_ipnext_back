@@ -9,3 +9,9 @@ services:
       - .env
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8288/api/v1/auth/me"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

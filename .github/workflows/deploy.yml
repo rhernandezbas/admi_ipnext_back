@@ -21,7 +21,6 @@ jobs:
 
       - name: Build y levantar servicios
         run: |
-          docker compose pull mysql || true
           docker compose build --no-cache backend
           docker compose up -d --remove-orphans
 
@@ -30,10 +29,10 @@ jobs:
           for i in $(seq 1 30); do
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' ipnext_backend 2>/dev/null || echo "starting")
             echo "Intento $i: $STATUS"
-            if [ "$STATUS" = "healthy" ] || [ "$STATUS" = "running" ]; then
+            if [ "$STATUS" = "healthy" ]; then
               exit 0
             fi
-            sleep 3
+            sleep 5
           done
           echo "El backend no levantó a tiempo"
           docker compose logs backend --tail=50
