@@ -29,10 +29,10 @@ type contratoProveedorModel struct {
 	ID            string     `gorm:"primaryKey;type:char(36)"`
 	Codigo        string     `gorm:"uniqueIndex;not null"`
 	ProveedorID   string     `gorm:"type:char(36);not null"`
+	Descripcion   string     `gorm:"type:text;not null;default:''"`
 	VigenciaDesde time.Time  `gorm:"not null"`
 	VigenciaHasta time.Time  `gorm:"not null"`
-	MontoAnual    float64    `gorm:"type:decimal(15,2);not null"`
-	Renovacion    *time.Time
+	MontoAnual    float64    `gorm:"column:monto_mensual;type:decimal(15,2);not null"`
 	Estado        string     `gorm:"type:varchar(30);not null;default:activo"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
@@ -187,13 +187,13 @@ func toProveedorModel(p *proveedor.Proveedor) *proveedorModel {
 }
 func toContratoDomain(m *contratoProveedorModel) *proveedor.ContratoProveedor {
 	return &proveedor.ContratoProveedor{ID: m.ID, Codigo: m.Codigo, ProveedorID: m.ProveedorID,
-		VigenciaDesde: m.VigenciaDesde, VigenciaHasta: m.VigenciaHasta, MontoAnual: m.MontoAnual,
-		Renovacion: m.Renovacion, Estado: proveedor.EstadoContrato(m.Estado),
+		Descripcion: m.Descripcion, VigenciaDesde: m.VigenciaDesde, VigenciaHasta: m.VigenciaHasta,
+		MontoAnual: m.MontoAnual, Estado: proveedor.EstadoContrato(m.Estado),
 		CreatedAt: m.CreatedAt, UpdatedAt: m.UpdatedAt}
 }
 func toContratoModel(c *proveedor.ContratoProveedor) *contratoProveedorModel {
 	return &contratoProveedorModel{ID: c.ID, Codigo: c.Codigo, ProveedorID: c.ProveedorID,
-		VigenciaDesde: c.VigenciaDesde, VigenciaHasta: c.VigenciaHasta, MontoAnual: c.MontoAnual,
-		Renovacion: c.Renovacion, Estado: string(c.Estado),
+		Descripcion: c.Descripcion, VigenciaDesde: c.VigenciaDesde, VigenciaHasta: c.VigenciaHasta,
+		MontoAnual: c.MontoAnual, Estado: string(c.Estado),
 		CreatedAt: c.CreatedAt, UpdatedAt: c.UpdatedAt}
 }

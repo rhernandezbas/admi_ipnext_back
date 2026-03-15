@@ -122,10 +122,10 @@ func (h *ProveedorHandlerImpl) ListContratos(c *gin.Context) {
 func (h *ProveedorHandlerImpl) CreateContrato(c *gin.Context) {
 	var body struct {
 		ProveedorID   string  `json:"proveedorId" binding:"required"`
+		Descripcion   string  `json:"descripcion"`
 		VigenciaDesde string  `json:"vigenciaDesde" binding:"required"`
 		VigenciaHasta string  `json:"vigenciaHasta" binding:"required"`
 		MontoAnual    float64 `json:"montoAnual" binding:"required,gt=0"`
-		Renovacion    *string `json:"renovacion"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, errValidacion(err.Error()))
@@ -138,12 +138,8 @@ func (h *ProveedorHandlerImpl) CreateContrato(c *gin.Context) {
 		return
 	}
 	req := appprov.CreateContratoRequest{
-		ProveedorID: body.ProveedorID, VigenciaDesde: desde, VigenciaHasta: hasta, MontoAnual: body.MontoAnual,
-	}
-	if body.Renovacion != nil {
-		if r, err := time.Parse("2006-01-02", *body.Renovacion); err == nil {
-			req.Renovacion = &r
-		}
+		ProveedorID: body.ProveedorID, Descripcion: body.Descripcion,
+		VigenciaDesde: desde, VigenciaHasta: hasta, MontoAnual: body.MontoAnual,
 	}
 	cont, err := h.createContrato.Execute(c.Request.Context(), req)
 	if err != nil {

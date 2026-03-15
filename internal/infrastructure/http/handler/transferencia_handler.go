@@ -124,10 +124,45 @@ func (h *TransferenciaHandlerImpl) Create(c *gin.Context) {
 }
 
 func (h *TransferenciaHandlerImpl) Update(c *gin.Context) {
-	var req apptrans.UpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var body struct {
+		Beneficiario     *string  `json:"beneficiario"`
+		CBU              *string  `json:"cbu"`
+		Alias            *string  `json:"alias"`
+		Categoria        *string  `json:"categoria"`
+		Monto            *float64 `json:"monto"`
+		Moneda           *string  `json:"moneda"`
+		FechaPago        *string  `json:"fechaPago"`
+		FechaVencimiento *string  `json:"fechaVencimiento"`
+		Frecuencia       *string  `json:"frecuencia"`
+		MetodoPago       *string  `json:"metodoPago"`
+		Notas            *string  `json:"notas"`
+		ProveedorID      *string  `json:"proveedorId"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, errValidacion(err.Error()))
 		return
+	}
+	req := apptrans.UpdateRequest{
+		Beneficiario: body.Beneficiario, CBU: body.CBU, Alias: body.Alias,
+		Categoria: body.Categoria, Monto: body.Monto, Moneda: body.Moneda,
+		Frecuencia: body.Frecuencia, MetodoPago: body.MetodoPago,
+		Notas: body.Notas, ProveedorID: body.ProveedorID,
+	}
+	if body.FechaPago != nil {
+		t, err := time.Parse("2006-01-02", *body.FechaPago)
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, errValidacion("fechaPago debe ser YYYY-MM-DD"))
+			return
+		}
+		req.FechaPago = &t
+	}
+	if body.FechaVencimiento != nil {
+		t, err := time.Parse("2006-01-02", *body.FechaVencimiento)
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, errValidacion("fechaVencimiento debe ser YYYY-MM-DD"))
+			return
+		}
+		req.FechaVencimiento = &t
 	}
 	t, err := h.update.Execute(c.Request.Context(), c.Param("id"), req)
 	if err != nil {

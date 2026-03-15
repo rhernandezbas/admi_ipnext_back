@@ -29,10 +29,10 @@ type ContratoProveedor struct {
 	ID            string
 	Codigo        string // CTR-2024-001
 	ProveedorID   string
+	Descripcion   string
 	VigenciaDesde time.Time
 	VigenciaHasta time.Time
 	MontoAnual    float64
-	Renovacion    *time.Time
 	Estado        EstadoContrato
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

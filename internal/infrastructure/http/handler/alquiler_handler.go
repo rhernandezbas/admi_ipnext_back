@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	appalq "github.com/ipnext/admin-backend/internal/application/alquiler"
@@ -123,12 +124,31 @@ func (h *AlquilerHandlerImpl) ListContratos(c *gin.Context) {
 }
 
 func (h *AlquilerHandlerImpl) CreateContrato(c *gin.Context) {
-	var req appalq.CreateContratoRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var body struct {
+		InmuebleID       string  `json:"inmuebleId" binding:"required"`
+		VigenciaDesde    string  `json:"vigenciaDesde" binding:"required"`
+		VigenciaHasta    string  `json:"vigenciaHasta" binding:"required"`
+		AjusteFrecuencia string  `json:"ajusteFrecuencia" binding:"required"`
+		MontoMensual     float64 `json:"montoMensual" binding:"required,gt=0"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, errValidacion(err.Error()))
 		return
 	}
-	contrato, err := h.createContrato.Execute(c.Request.Context(), req)
+	desde, err := time.Parse("2006-01-02", body.VigenciaDesde)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, errValidacion("vigenciaDesde debe ser YYYY-MM-DD"))
+		return
+	}
+	hasta, err := time.Parse("2006-01-02", body.VigenciaHasta)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, errValidacion("vigenciaHasta debe ser YYYY-MM-DD"))
+		return
+	}
+	contrato, err := h.createContrato.Execute(c.Request.Context(), appalq.CreateContratoRequest{
+		InmuebleID: body.InmuebleID, VigenciaDesde: desde, VigenciaHasta: hasta,
+		AjusteFrecuencia: body.AjusteFrecuencia, MontoMensual: body.MontoMensual,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errInterno())
 		return

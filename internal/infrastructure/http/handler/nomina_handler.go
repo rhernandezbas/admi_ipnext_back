@@ -212,12 +212,26 @@ func (h *NominaHandlerImpl) ListGuardias(c *gin.Context) {
 }
 
 func (h *NominaHandlerImpl) CreateGuardia(c *gin.Context) {
-	var req appnomina.CreateGuardiaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var body struct {
+		EmpleadoID  string  `json:"empleadoId" binding:"required"`
+		Fecha       string  `json:"fecha" binding:"required"`
+		Horas       float64 `json:"horas" binding:"required,gt=0"`
+		Monto       float64 `json:"monto" binding:"required,gt=0"`
+		Descripcion *string `json:"descripcion"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, errValidacion(err.Error()))
 		return
 	}
-	g, err := h.createGuardia.Execute(c.Request.Context(), req)
+	fecha, err := time.Parse("2006-01-02", body.Fecha)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, errValidacion("fecha debe ser YYYY-MM-DD"))
+		return
+	}
+	g, err := h.createGuardia.Execute(c.Request.Context(), appnomina.CreateGuardiaRequest{
+		EmpleadoID: body.EmpleadoID, Fecha: fecha,
+		Horas: body.Horas, Monto: body.Monto,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errInterno())
 		return

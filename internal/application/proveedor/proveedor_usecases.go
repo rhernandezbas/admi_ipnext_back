@@ -165,10 +165,10 @@ func (uc *ListContratosUseCase) Execute(ctx context.Context, proveedorID *string
 
 type CreateContratoRequest struct {
 	ProveedorID   string
+	Descripcion   string
 	VigenciaDesde time.Time
 	VigenciaHasta time.Time
 	MontoAnual    float64
-	Renovacion    *time.Time
 }
 
 type CreateContratoUseCase struct {
@@ -193,10 +193,10 @@ func (uc *CreateContratoUseCase) Execute(ctx context.Context, req CreateContrato
 		ID:            uuid.NewString(),
 		Codigo:        codigo,
 		ProveedorID:   req.ProveedorID,
+		Descripcion:   req.Descripcion,
 		VigenciaDesde: req.VigenciaDesde,
 		VigenciaHasta: req.VigenciaHasta,
 		MontoAnual:    req.MontoAnual,
-		Renovacion:    req.Renovacion,
 		Estado:        domproveedor.EstadoActivo,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),

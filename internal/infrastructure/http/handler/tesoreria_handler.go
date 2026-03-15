@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apptes "github.com/ipnext/admin-backend/internal/application/tesoreria"
+	domtesoreria "github.com/ipnext/admin-backend/internal/domain/tesoreria"
 )
 
 type TesoreriaHandlerImpl struct {
@@ -130,12 +131,28 @@ func (h *TesoreriaHandlerImpl) GetConciliacion(c *gin.Context) {
 }
 
 func (h *TesoreriaHandlerImpl) CreateMovimiento(c *gin.Context) {
-	var req apptes.CreateMovimientoRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var body struct {
+		CuentaID    string  `json:"cuentaId" binding:"required"`
+		Tipo        string  `json:"tipo" binding:"required"`
+		Monto       float64 `json:"monto" binding:"required,gt=0"`
+		Descripcion string  `json:"descripcion" binding:"required"`
+		Fecha       string  `json:"fecha" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, errValidacion(err.Error()))
 		return
 	}
-	mov, err := h.createMovimiento.Execute(c.Request.Context(), req)
+	fecha, err := time.Parse("2006-01-02", body.Fecha)
+	if err != nil {
+		if fecha, err = time.Parse(time.RFC3339, body.Fecha); err != nil {
+			c.JSON(http.StatusUnprocessableEntity, errValidacion("fecha debe ser YYYY-MM-DD"))
+			return
+		}
+	}
+	mov, err := h.createMovimiento.Execute(c.Request.Context(), apptes.CreateMovimientoRequest{
+		CuentaID: body.CuentaID, Tipo: domtesoreria.TipoMovimiento(body.Tipo), Monto: body.Monto,
+		Descripcion: body.Descripcion, Fecha: fecha,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errInterno())
 		return
