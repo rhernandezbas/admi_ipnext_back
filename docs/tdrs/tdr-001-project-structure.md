@@ -1,26 +1,23 @@
 # TDR-001: Estructura del Proyecto (Arquitectura Hexagonal)
 
 ## Estado
-Propuesto
+Implementado
 
 ## Contexto
-El backend usa arquitectura hexagonal (ports & adapters). Necesitamos definir la estructura de carpetas, los roles de cada capa y las convenciones de nombrado para que el proyecto sea mantenible y coherente.
+El backend usa arquitectura hexagonal (ports & adapters). Este documento define la estructura de carpetas implementada, los roles de cada capa y las convenciones de nombrado.
 
-## Decisión
-
-### Estructura de carpetas
+## Estructura de carpetas (implementada)
 
 ```
-ipnext-backend/
+administracion-backend/
 ├── cmd/
 │   └── server/
-│       └── main.go                    ← entrypoint: wiring de dependencias, arranque
+│       └── main.go                    ← entrypoint: wiring manual de dependencias + runMigrations
 ├── internal/
 │   ├── domain/                        ← capa de dominio (sin dependencias externas)
 │   │   ├── transferencia/
 │   │   │   ├── entity.go              ← struct Transferencia + métodos de dominio
-│   │   │   ├── repository.go          ← interface TransferenciaRepository (port)
-│   │   │   └── service.go             ← interface TransferenciaService (port)
+│   │   │   └── repository.go          ← interface Repository (port)
 │   │   ├── empleado/
 │   │   ├── proveedor/
 │   │   ├── servicio/
@@ -29,21 +26,35 @@ ipnext-backend/
 │   │   └── usuario/
 │   ├── application/                   ← casos de uso (orquestan dominio)
 │   │   ├── transferencia/
-│   │   │   ├── list_transferencias.go
-│   │   │   ├── create_transferencia.go
-│   │   │   ├── update_transferencia.go
-│   │   │   └── delete_transferencia.go
+│   │   │   └── transferencia_usecases.go   ← todos los use cases del módulo en un archivo
 │   │   ├── nomina/
+│   │   │   ├── empleado_usecases.go
+│   │   │   ├── liquidacion_usecases.go
+│   │   │   └── guardia_compensacion_usecases.go
 │   │   ├── proveedor/
-│   │   └── ...
-│   └── infrastructure/                ← adaptadores (implementan los puertos)
-│       ├── http/                      ← adaptador HTTP (Gin)
-│       │   ├── router.go              ← registro de todas las rutas
+│   │   │   └── proveedor_usecases.go
+│   │   ├── servicio/
+│   │   ├── alquiler/
+│   │   │   └── alquiler_usecases.go
+│   │   ├── tesoreria/
+│   │   │   └── tesoreria_usecases.go
+│   │   ├── reporte/
+│   │   │   ├── financiero.go
+│   │   │   ├── nomina.go
+│   │   │   ├── proveedores.go
+│   │   │   ├── inmuebles.go
+│   │   │   └── csv.go
+│   │   └── usuario/
+│   │       └── usuario_usecases.go
+│   └── infrastructure/                ← adaptadores
+│       ├── http/
+│       │   ├── router.go              ← registro de todas las rutas (SetupRouter)
 │       │   ├── middleware/
-│       │   │   ├── auth.go
-│       │   │   └── permiso.go
+│       │   │   ├── auth.go            ← AuthMiddleware (valida JWT de cookie)
+│       │   │   └── permiso.go         ← RequirePermiso(modulo, nivel)
 │       │   └── handler/               ← un handler por módulo
 │       │       ├── auth_handler.go
+│       │       ├── dashboard_handler.go
 │       │       ├── transferencia_handler.go
 │       │       ├── nomina_handler.go
 │       │       ├── proveedor_handler.go
@@ -51,66 +62,76 @@ ipnext-backend/
 │       │       ├── alquiler_handler.go
 │       │       ├── tesoreria_handler.go
 │       │       ├── reporte_handler.go
-│       │       └── dashboard_handler.go
-│       ├── persistence/               ← adaptador DB (GORM + MySQL)
-│       │   ├── model/                 ← structs GORM (pueden diferir de las entidades)
-│       │   │   ├── transferencia_model.go
-│       │   │   └── ...
-│       │   └── repository/            ← implementaciones de los ports
-│       │       ├── transferencia_repo.go
-│       │       └── ...
-│       └── config/
-│           └── database.go            ← conexión MySQL
+│       │       └── usuario_handler.go
+│       └── persistence/
+│           └── repository/            ← modelos GORM + implementaciones de repos (en el mismo paquete)
+│               ├── transferencia_repo.go
+│               ├── empleado_repo.go
+│               ├── proveedor_repo.go
+│               ├── servicio_repo.go
+│               ├── alquiler_repo.go
+│               ├── tesoreria_repo.go
+│               └── usuario_repo.go
 ├── config/
-│   ├── config.go                      ← struct Config + carga desde env
-│   └── .env.example
+│   └── config.go                      ← struct Config + carga desde env (godotenv)
 ├── migrations/
-│   ├── 001_create_usuarios.sql
-│   ├── 002_create_transferencias.sql
-│   └── ...
+│   └── 001_initial_schema.sql         ← schema completo, versionado con goose
+├── .github/
+│   └── workflows/
+│       └── deploy.yml                 ← CI/CD: push a main → build Docker → deploy VPS
 ├── docker-compose.yml
-├── Dockerfile
+├── Dockerfile                         ← multi-stage: golang:1.25-alpine → alpine:3.19
 └── go.mod
 ```
 
-### Reglas de capas
+## Reglas de capas
 
 | Capa | Puede importar | No puede importar |
 |------|---------------|-------------------|
 | `domain/` | solo stdlib Go | `application/`, `infrastructure/` |
-| `application/` | `domain/` | `infrastructure/` (solo interfaces) |
-| `infrastructure/` | `domain/`, `application/`, libs externas | nada prohibido |
+| `application/` | `domain/`, stdlib | `infrastructure/` |
+| `infrastructure/` | `domain/`, `application/`, libs externas | — |
 
-### Convenciones de nombrado
+## Convenciones implementadas
 
-- Entidades de dominio: `PascalCase` struct, archivo `entity.go`
-- Ports (interfaces): sufijo `Repository` o `Service` → `TransferenciaRepository`
-- Adaptadores (implementaciones): prefijo `MySQL` o `GORM` → `MySQLTransferenciaRepository`
-- Handlers: sufijo `Handler` → `TransferenciaHandler`
-- Casos de uso: archivo descriptivo → `create_transferencia.go`, struct `CreateTransferenciaUseCase`
-- DTOs de request/response: en el handler, sufijo `Request` / `Response`
+- **Modelos GORM:** definidos en el mismo archivo que el repo que los usa (ej: `empleadoModel` en `empleado_repo.go`). Si hay discrepancia entre nombre Go y columna DB, se usa tag `gorm:"column:..."`.
+- **Use cases:** todos los use cases de un módulo en un archivo (o pocos archivos por sub-dominio). Cada use case es una struct con método `Execute`.
+- **Handlers:** un archivo por módulo. Los structs de request se definen localmente en el handler. Las fechas se reciben como `string` y se parsean con `time.Parse("2006-01-02", ...)`.
+- **Router:** todas las rutas en `router.go`. Los grupos de rutas protegidas usan `middleware.AuthMiddleware` y `middleware.RequirePermiso`.
 
-### Inyección de dependencias
+## Inyección de dependencias
 
-Wiring manual en `cmd/server/main.go`:
+Wiring manual en `cmd/server/main.go`. Sin frameworks DI. Orden: repos → use cases → handlers → router.
+
 ```go
-// Repositorios
-transRepo := persistence.NewMySQLTransferenciaRepository(db)
+// Repos
+transRepo := repository.NewMySQLTransferenciaRepository(db)
 
-// Casos de uso
-createTransferencia := application.NewCreateTransferenciaUseCase(transRepo)
+// Use cases
+listUC := transferencia.NewListUseCase(transRepo)
+createUC := transferencia.NewCreateUseCase(transRepo)
 
-// Handlers
-transHandler := handler.NewTransferenciaHandler(createTransferencia, ...)
+// Handler
+transHandler := handler.NewTransferenciaHandler(listUC, createUC, ...)
 
 // Router
-router.SetupRoutes(transHandler, ...)
+r := infrahttp.SetupRouter(handlers, cfg.JWT.Secret)
 ```
 
-Sin frameworks DI — Go idiomático con constructores.
+## Migraciones
+
+Las migraciones se ejecutan automáticamente al iniciar el servidor:
+
+```go
+func runMigrations(dsn, migrationsDir string) {
+    // goose.Up con el directorio de migrations
+}
+```
+
+La ruta al directorio `migrations/` se resuelve en tiempo de ejecución con `runtime.Caller(0)` para ser compatible tanto en desarrollo como dentro del contenedor Docker.
 
 ## Consecuencias
 - Positivo: dominio sin dependencias externas = testeable con mocks puros.
 - Positivo: cambiar DB (ej: a PostgreSQL) = solo tocar `infrastructure/persistence/`.
 - Positivo: agregar un módulo nuevo = seguir el mismo patrón sin afectar otros.
-- A tener en cuenta: más archivos que MVC clásico — compensado por claridad y testabilidad.
+- A tener en cuenta: más archivos que MVC clásico — compensado por claridad y mantenibilidad.

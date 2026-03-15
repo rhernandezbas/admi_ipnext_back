@@ -1,7 +1,7 @@
 # ADR-001: Tech Stack Backend
 
 ## Estado
-Aceptado
+Aceptado — Implementado
 
 ## Contexto
 Definir el stack tecnológico del backend de IPNEXT Admin antes de iniciar el desarrollo. El backend debe servir a una SPA React como única consumidora.
@@ -10,37 +10,66 @@ Definir el stack tecnológico del backend de IPNEXT Admin antes de iniciar el de
 
 | Categoría | Tecnología | Justificación |
 |-----------|-----------|---------------|
-| Lenguaje | **Go 1.22+** | Rendimiento nativo, tipado estático, compilado, manejo de concurrencia idiomático, binario único fácil de desplegar |
-| Framework HTTP | **Gin** | El más usado en Go, rápido, middleware ecosystem maduro, buena DX |
-| ORM | **GORM** | ORM más popular en Go, soporte MySQL, migraciones, hooks, associations |
-| Base de datos | **MySQL 8** | RDBMS relacional, soporta JSON columns, bien soportado por GORM |
-| Migraciones | **goose** | Migraciones con SQL puro o Go, versionadas, compatible con CI |
-| Auth | **golang-jwt/jwt v5** | JWT estándar, sin dependencias extra, bien mantenido |
-| Config | **godotenv + viper** | Variables de entorno + archivo de config con override por entorno |
-| Logging | **zap (uber-go)** | Structured logging, alto rendimiento, niveles de log |
-| Testing | **testify** | Assert/require/mock estándar en el ecosistema Go |
-| Contenerización | **Docker + Docker Compose** | Entorno reproducible, fácil de desplegar en cualquier servidor |
-| Hot reload (dev) | **air** | Live reload para Go en desarrollo |
+| Lenguaje | **Go 1.25** | Rendimiento nativo, tipado estático, compilado, binario único fácil de desplegar |
+| Framework HTTP | **Gin** | El más usado en Go, rápido, middleware ecosystem maduro |
+| ORM | **GORM** | ORM más popular en Go, soporte MySQL/MariaDB, hooks |
+| Base de datos | **MariaDB** (en host) | RDBMS relacional, corriendo en el VPS como servicio del sistema operativo |
+| Migraciones | **goose** | Migraciones con SQL puro, versionadas. **Importante:** una sentencia por bloque `StatementBegin/StatementEnd` (requerimiento de MariaDB) |
+| Auth | **golang-jwt/jwt v5** | JWT estándar, sin dependencias extra |
+| Config | **godotenv** | Variables de entorno desde archivo `.env` |
+| Contenerización | **Docker multi-stage + Docker Compose** | Build: `golang:1.25-alpine`; Runtime: `alpine:3.19`. Sin MySQL en Docker (usa host) |
+| Deploy | **GitHub Actions + self-hosted runner** | Push a `main` dispara build y deploy automático en VPS |
 
-## Estructura de módulos Go
+## Estructura del proyecto
 
 ```
-go.mod
-cmd/
-  server/
-    main.go          ← entrypoint
-internal/            ← código privado de la app (hexagonal)
-  domain/            ← entidades, puertos (interfaces)
-  application/       ← casos de uso
-  infrastructure/    ← adaptadores: DB, HTTP, externos
-config/
-  config.go
-migrations/          ← archivos .sql de goose
+administracion-backend/
+├── cmd/
+│   └── server/
+│       └── main.go              ← entrypoint + wiring completo de dependencias
+├── internal/
+│   ├── domain/                  ← entidades y ports (interfaces) — sin dependencias externas
+│   │   ├── transferencia/
+│   │   ├── empleado/
+│   │   ├── proveedor/
+│   │   ├── servicio/
+│   │   ├── alquiler/
+│   │   ├── tesoreria/
+│   │   └── usuario/
+│   ├── application/             ← casos de uso (orquestan dominio)
+│   │   ├── transferencia/
+│   │   ├── nomina/
+│   │   ├── proveedor/
+│   │   ├── servicio/
+│   │   ├── alquiler/
+│   │   ├── tesoreria/
+│   │   ├── reporte/
+│   │   └── usuario/
+│   └── infrastructure/          ← adaptadores
+│       ├── http/
+│       │   ├── router.go
+│       │   ├── middleware/
+│       │   └── handler/
+│       └── persistence/
+│           └── repository/      ← modelos GORM + implementaciones de repos
+├── config/
+│   └── config.go
+├── migrations/
+│   └── 001_initial_schema.sql   ← schema completo en un único archivo versionado con goose
+├── docker-compose.yml
+├── Dockerfile
+└── go.mod
 ```
+
+## Decisiones de implementación relevantes
+
+- Los modelos GORM viven en el mismo paquete que los repos (`repository/`), no en un paquete `model/` separado.
+- Las migraciones goose se ejecutan automáticamente al iniciar el servidor (`runMigrations` en `main.go`), usando `runtime.Caller(0)` para resolver la ruta relativa al binario compilado.
+- El contenedor Docker conecta a la BD del host mediante `extra_hosts: host.docker.internal:host-gateway` en `docker-compose.yml`.
 
 ## Consecuencias
 - Positivo: binario Go compilado = despliegue simple sin runtime externo.
-- Positivo: GORM + goose = migraciones versionadas y reproducibles.
-- Positivo: Gin + zap = logs estructurados listos para observabilidad.
+- Positivo: goose con SQL puro = migraciones legibles y versionadas.
+- Positivo: arquitectura hexagonal = cada módulo es independiente y testeable.
 - A tener en cuenta: Go no tiene excepciones — el manejo de errores es explícito (`error` return).
-- A tener en cuenta: GORM `AutoMigrate` solo en desarrollo; en producción usar goose.
+- A tener en cuenta: la cookie JWT tiene flag `Secure`; el frontend debe acceder por HTTPS.

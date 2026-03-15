@@ -1,10 +1,10 @@
 # ADR-003: Estrategia de Autenticación y Autorización
 
 ## Estado
-Aceptado
+Aceptado — Implementado
 
 ## Contexto
-El sistema tiene dos roles (Admin / Sub-usuario) con permisos granulares por módulo y nivel (lectura / escritura / ninguno). La autenticación debe ser segura contra XSS y fácil de implementar desde el frontend React.
+El sistema tiene dos roles (Admin / Sub-usuario) con permisos granulares por módulo y nivel (lectura / escritura / ninguno). La autenticación debe ser segura contra XSS y funcionar desde el frontend React.
 
 ## Decisión
 
@@ -14,6 +14,8 @@ El sistema tiene dos roles (Admin / Sub-usuario) con permisos granulares por mó
 - El cliente nunca accede al token por JS — protección contra XSS.
 - El JWT expira en **8 horas**; el frontend redirige a `/login` al recibir 401.
 - No hay refresh token en v1 — al vencer se re-loguea.
+
+> **Importante en producción:** el flag `Secure` requiere que el frontend acceda por **HTTPS**. Si el frontend usa HTTP, el browser descarta la cookie y el usuario queda deslogueado inmediatamente tras el login. Solución: configurar HTTPS en el VPS (Traefik/Nginx + Let's Encrypt).
 
 ### Estructura del JWT payload
 
@@ -36,21 +38,23 @@ El sistema tiene dos roles (Admin / Sub-usuario) con permisos granulares por mó
 }
 ```
 
-### Middleware de autenticación (Go)
+### Middleware implementado
 
 ```go
-// AuthMiddleware — valida JWT, inyecta claims en context
-func AuthMiddleware() gin.HandlerFunc
+// AuthMiddleware — lee cookie "token", valida JWT, inyecta claims en context Gin
+func AuthMiddleware(jwtSecret string) gin.HandlerFunc
 
-// RequirePermiso — valida módulo + nivel mínimo
+// RequirePermiso — verifica que el usuario tenga el nivel mínimo sobre el módulo
 func RequirePermiso(modulo string, nivelMinimo string) gin.HandlerFunc
 ```
 
 Uso en rutas:
 ```go
-transferencias := r.Group("/api/v1/transferencias", AuthMiddleware())
-transferencias.GET("", RequirePermiso("transferencias", "lectura"), handler.List)
-transferencias.POST("", RequirePermiso("transferencias", "escritura"), handler.Create)
+protected := api.Group("", middleware.AuthMiddleware(jwtSecret))
+trans := protected.Group("/transferencias")
+trans.GET("", middleware.RequirePermiso("transferencias", "lectura"), h.Transferencia.List)
+trans.POST("", middleware.RequirePermiso("transferencias", "escritura"), h.Transferencia.Create)
+trans.DELETE("/:id", middleware.RequirePermiso("transferencias", "admin_only"), h.Transferencia.Delete)
 ```
 
 ### Reglas de autorización
@@ -64,31 +68,41 @@ transferencias.POST("", RequirePermiso("transferencias", "escritura"), handler.C
 Acciones `admin_only`:
 - `DELETE` en cualquier recurso
 - `POST /api/v1/nominas/liquidaciones/:id/aprobar`
-- `POST /api/v1/usuarios` (crear sub-usuarios)
+- `GET|POST|PATCH|DELETE /api/v1/usuarios`
 
 ### Endpoints de autenticación
 
 ```
 POST /api/v1/auth/login
   Body: { "email": string, "password": string }
-  Response: { "data": { "usuario": Usuario } }
-  Cookie: Set-Cookie: token=<jwt>; HttpOnly; Secure; SameSite=Strict
+  Response: { "data": { "usuario": { id, nombre, email, rol, permisos, avatar, creadoEn } } }
+  Cookie: Set-Cookie: token=<jwt>; Path=/; Max-Age=28800; HttpOnly; Secure
 
 POST /api/v1/auth/logout
   Response: 200 OK
   Cookie: token="" con Max-Age=0 (invalida la cookie)
 
 GET /api/v1/auth/me
-  Response: { "data": { "usuario": Usuario } }
+  Response: { "data": { "usuario": {...} } }
 ```
 
 ### Almacenamiento de contraseñas
 
-- Hash con **bcrypt** (cost factor 12).
-- Nunca almacenar ni loguear contraseña en texto plano.
+- Hash con **bcrypt** (cost factor 10).
+- Nunca se almacena ni loguea la contraseña en texto plano.
+
+### Usuario administrador por defecto (seed)
+
+| Campo | Valor |
+|-------|-------|
+| Email | `admin@ipnext.com` |
+| Password | `password` |
+| Rol | `admin` |
+
+Este usuario se inserta con `INSERT IGNORE` en la migración inicial, por lo que no falla si ya existe.
 
 ## Consecuencias
 - Positivo: httpOnly cookie = sin riesgo XSS sobre el token.
 - Positivo: permisos en el JWT = el middleware no necesita ir a la DB en cada request.
-- A tener en cuenta: si se cambian permisos de un sub-usuario, el JWT viejo sigue siendo válido hasta expirar (8h). Aceptable para v1.
-- A tener en cuenta: en producción el flag `Secure` requiere HTTPS.
+- A tener en cuenta: si se cambian permisos de un sub-usuario, el JWT viejo sigue válido hasta expirar (8h). Aceptable para v1.
+- A tener en cuenta: el flag `Secure` requiere HTTPS en producción para que el login funcione correctamente.
