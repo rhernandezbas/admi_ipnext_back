@@ -49,7 +49,7 @@ type guardiaModel struct {
 	Fecha      time.Time `gorm:"not null"`
 	Horas      float64   `gorm:"type:decimal(5,2);not null"`
 	Monto      float64   `gorm:"type:decimal(15,2);not null"`
-	Notas      *string
+	Notas      *string   `gorm:"column:descripcion"`
 	CreatedAt  time.Time
 }
 
