@@ -1,0 +1,6 @@
+.env
+*.env
+*.log
+/server
+/tmp
+vendor/

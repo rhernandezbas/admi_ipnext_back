@@ -1,0 +1,22 @@
+{
+  ".cliplin/knowledge/cliplin-framework/docs/adrs/000-cliplin-framework.md": {
+    "fingerprint": "310e532594465948e0563fc5733e7f0b5e0fe748f57435a6ebc095fd390879f7",
+    "last_indexed_at": "2026-03-15T08:47:23.187334+00:00"
+  },
+  ".cliplin/knowledge/cliplin-framework/docs/adrs/001-ts4-format.md": {
+    "fingerprint": "4e5304880489a8f92e410b03b39a655b01438c5c2e924e3c3d37068084197e1d",
+    "last_indexed_at": "2026-03-15T08:47:23.350273+00:00"
+  },
+  ".cliplin/knowledge/cliplin-framework/docs/adrs/002-ui-intent-format.md": {
+    "fingerprint": "579f16fdeb5617edef00f49deb0fc218906df538e6d9ba51a4d6d5a6c70fab07",
+    "last_indexed_at": "2026-03-15T08:47:23.491267+00:00"
+  },
+  ".cliplin/knowledge/cliplin-framework/docs/adrs/003-tdr-format.md": {
+    "fingerprint": "3064680f43d123d4550a811c5ab5165c01abefb06860eae48560e4db6ddd8d9e",
+    "last_indexed_at": "2026-03-15T08:47:23.627888+00:00"
+  },
+  ".cliplin/knowledge/cliplin-framework/docs/adrs/005-knowledge-packages.md": {
+    "fingerprint": "8db611655e8066230e402c2ee308ac892cebd45ae7e34029f59f54c86a271d08",
+    "last_indexed_at": "2026-03-15T08:47:23.774697+00:00"
+  }
+}

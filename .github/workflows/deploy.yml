@@ -1,0 +1,43 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted   # tu runner en el VPS
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Copiar .env de producción
+        run: |
+          # El .env de producción vive fuera del repo en el VPS
+          # Se copia antes del build para que docker-compose lo tenga
+          cp ${{ secrets.ENV_FILE_PATH }} .env
+
+      - name: Build y levantar servicios
+        run: |
+          docker compose pull mysql || true
+          docker compose build --no-cache backend
+          docker compose up -d --remove-orphans
+
+      - name: Esperar que el backend esté healthy
+        run: |
+          for i in $(seq 1 30); do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' ipnext_backend 2>/dev/null || echo "starting")
+            echo "Intento $i: $STATUS"
+            if [ "$STATUS" = "healthy" ] || [ "$STATUS" = "running" ]; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "El backend no levantó a tiempo"
+          docker compose logs backend --tail=50
+          exit 1
+
+      - name: Limpiar imágenes viejas
+        run: docker image prune -f
