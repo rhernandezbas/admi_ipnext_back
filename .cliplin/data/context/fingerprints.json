@@ -18,5 +18,33 @@
   ".cliplin/knowledge/cliplin-framework/docs/adrs/005-knowledge-packages.md": {
     "fingerprint": "8db611655e8066230e402c2ee308ac892cebd45ae7e34029f59f54c86a271d08",
     "last_indexed_at": "2026-03-15T08:47:23.774697+00:00"
+  },
+  "docs/adrs/001-tech-stack.md": {
+    "fingerprint": "4074fd348bd8ffe674458ff7cb2b3f33fe4032f16a74d19e282608c0a4bb1244",
+    "last_indexed_at": "2026-03-15T19:25:53.790813+00:00"
+  },
+  "docs/adrs/002-api-design.md": {
+    "fingerprint": "a5c2bf44b7babcc0ac976806088d9f9627aa58ab12a50da74ba7c5444a69d07b",
+    "last_indexed_at": "2026-03-15T19:25:53.934675+00:00"
+  },
+  "docs/adrs/003-auth-strategy.md": {
+    "fingerprint": "d29b2e03d4bbe3b1ac7f13c6a45d927261b4a68a90f7866309c9043ffa3916ee",
+    "last_indexed_at": "2026-03-15T19:25:54.086362+00:00"
+  },
+  "docs/business/ipnext-backend-overview.md": {
+    "fingerprint": "1cd7e2744d568641aca264affb9847e9271808436a1ada25b37fb9f645f447bd",
+    "last_indexed_at": "2026-03-15T19:25:54.239475+00:00"
+  },
+  "docs/tdrs/tdr-001-project-structure.md": {
+    "fingerprint": "42d250f3963281392f547888ccbb5d35444247b37dcf02f708c4e1b94ba2de19",
+    "last_indexed_at": "2026-03-15T19:26:02.992006+00:00"
+  },
+  "docs/tdrs/tdr-002-data-model.md": {
+    "fingerprint": "181f39e258372094f7da33308b421e3f4477c44175340702ceee2b859f6747f2",
+    "last_indexed_at": "2026-03-15T19:26:07.411463+00:00"
+  },
+  "docs/tdrs/tdr-003-endpoints.md": {
+    "fingerprint": "ef764203e7adc4b06c0afb9f7f447d0d90b7fe56e97fc8e2621fc131094afdf4",
+    "last_indexed_at": "2026-03-15T19:26:09.237906+00:00"
   }
 }
